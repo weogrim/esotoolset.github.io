@@ -14,11 +14,13 @@ const readFileAsText = (inputFile) => {
 };
 
 function luaToJson(str){
+	test = str;
+	console.log(str);
 	return JSON.parse(str.replace(/MM\d\dDataSavedVariables =/,"")
-	.replace(/ArkadiusTradeToolsSalesData\d\d =/,"")
-	.replace(/\[(.*)\]/g,'"$1\"')
+	.replace(/ArkadiusTradeToolsSalesData\d\d\s?=/,"")
+	.replace(/\[(.*?)\]/g,'"$1\"')
 	.replace(/\\\"/g,"'")
-	.replace(/\"\"(.*)\"\"/g,"\"$1\"")
+	.replace(/\"\"(.*?)\"\"/g,"\"$1\"")
 	.replace(/\=/g,":")
 	.replace(/[\t\r\n]/g,"")
 	.replace(/\s\s+/g," ")
