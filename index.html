@@ -9,9 +9,18 @@
   <div>
 	<h1>"PACROO" Trader Intelligence (PacrooTI)</h1>
 	<p>Click the file dialog below and select your MM data files. By default, they are located in %userprofile%\Documents\Elder Scrolls Online\live\SavedVariables.</p>
+	<p>You can upload multiple files at once, but can't upload MM and ATT files at the same time.</p>
+	<p>Only upload files called either ArkadiusTradeToolsSalesDataXX.lua or MMXXData.lua, where XX is replaced by digits.</p>
 	<p>They will be converted to CSV which can be viewed in Excel or similar software.</p>
 	<p>These files are not uploaded to the server, they remain on your computer and are processed inside the browser.</p>
-    <input type="file" id="fileinput" multiple />
+	<div>
+	<label for="fileinput_att">Arkadius Trade Tools Data File</label>
+    <input type="file" id="fileinput_att" multiple />
+	</div>
+	<div>
+	<label for="fileinput_mm">Master Merchant Data File</label>
+    <input type="file" id="fileinput_mm" multiple />
+	</div>
 	<p>If you run into any problems, you're on your own for now. This is experimental.</p>
 	<script src="main.js"></script>
   </body>

@@ -15,6 +15,7 @@ const readFileAsText = (inputFile) => {
 
 function luaToJson(str){
 	return JSON.parse(str.replace(/MM\d\dDataSavedVariables =/,"")
+	.replace(/ArkadiusTradeToolsSalesData\d\d =/,"")
 	.replace(/\[(.*)\]/g,'"$1\"')
 	.replace(/\\\"/g,"'")
 	.replace(/\"\"(.*)\"\"/g,"\"$1\"")
@@ -24,7 +25,30 @@ function luaToJson(str){
 	.replace(/,\s?(\}|\])/g,"$1"));
 }
 
-function unwrapJSON(input){
+function unwrapATTJSON(input){
+	var output = [];
+	var serverName = Object.keys(input)[0]
+	salesData = input[serverName].sales
+	var salesIDs = Object.keys(salesData);
+	salesIDs.forEach(function(salesID){
+		var sale = salesData[salesID];
+		var itemID = sale.itemLink.match(/item\:(\d+)\:/)[1];
+		var buyer = sale.buyerName.replace("@","");
+		var guild = sale.guildName;
+		var id = salesID;
+		var itemLink = sale.itemLink;
+		var price = sale.price;
+		var quant = sale.quantity;
+		var seller = sale.sellerName.replace("@","");
+		var timestamp = sale.timeStamp;
+		var wasKiosk = (sale.internal == 0)
+		var saleRecord = [itemID,buyer,guild,id,itemLink,price,quant,seller,timestamp,wasKiosk]
+		output.push(saleRecord);
+	});
+	return output;
+}
+
+function unwrapMMJSON(input){
 	var output = [];
 	salesData = input.Default.MasterMerchant.$AccountWide.SalesData
 	var itemIDs = Object.keys(salesData);
@@ -39,13 +63,13 @@ function unwrapJSON(input){
 			var salesIndices = Object.keys(sales);
 			salesIndices.forEach(function(saleIndex){
 				var sale = sales[saleIndex];
-				var buyer = sale.buyer;
+				var buyer = sale.buyer.replace("@","");
 				var guild = sale.guild;
 				var id = sale.id;
 				var itemLink = sale.itemLink;
 				var price = sale.price;
 				var quant = sale.quant;
-				var seller = sale.seller;
+				var seller = sale.seller.replace("@","");
 				var timestamp = sale.timestamp;
 				var wasKiosk = sale.wasKiosk;
 				
@@ -54,11 +78,17 @@ function unwrapJSON(input){
 			});			
 		});
 	});
+	console.log(output);
 	return output;
 }
 
-function addHeaders(data){
-	return [["itemID","instanceID","name","details","buyer","guild","id","itemLink","price","quantity","seller","timestamp","wasKiosk"]].concat(data);
+function addATTHeaders(data){
+	return [["itemID","buyer","guild","id","itemLink","price","quantity","seller","timestamp","wasKiosk"]].concat(data);
+}
+
+function addMMHeaders(data){
+	return [["itemID",
+	"instanceID","name","details","buyer","guild","id","itemLink","price","quantity","seller","timestamp","wasKiosk"]].concat(data);
 }
 
 //exporttoCsv taken from Stack Overflow, seems to suit purpose.
@@ -101,19 +131,32 @@ function exportToCsv(filename, rows) {
 		}
 	}
 }
-
-function readFiles(evt) {
+function readATTFiles(evt) {
 	var files = Array.from(evt.target.files);
 	if (files){
 		Promise.all(files.map(readFileAsText))
 		.then(function(v){return v.map(luaToJson)})
-		.then(function(v){return v.map(unwrapJSON)})
+		.then(function(v){return v.map(unwrapATTJSON)})
 		.then(function(v){return v.reduce((a, b) => a.concat(b), []);})
-		.then(function(v){return addHeaders(v)})
+		.then(function(v){return addATTHeaders(v)})
+		.then(function(v){exportToCsv("merchant.csv",v)});
+	} else {
+		alert("OH NO, SOMETHING BROKE");
+	}
+}
+function readMMFiles(evt) {
+	var files = Array.from(evt.target.files);
+	if (files){
+		Promise.all(files.map(readFileAsText))
+		.then(function(v){return v.map(luaToJson)})
+		.then(function(v){return v.map(unwrapMMJSON)})
+		.then(function(v){return v.reduce((a, b) => a.concat(b), []);})
+		.then(function(v){return addMMHeaders(v)})
 		.then(function(v){exportToCsv("merchant.csv",v)});
 	} else {
 		alert("OH NO, SOMETHING BROKE");
 	}
 }
 
-document.getElementById('fileinput').addEventListener('change', readFiles, false);
+document.getElementById('fileinput_mm').addEventListener('change', readMMFiles, false);
+document.getElementById('fileinput_att').addEventListener('change', readATTFiles, false);
